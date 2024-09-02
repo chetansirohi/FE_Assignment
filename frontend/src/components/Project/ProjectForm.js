@@ -8,28 +8,35 @@ import { Label } from "../ui/label";
 import { Alert, AlertDescription } from "../ui/alert";
 
 const ProjectForm = ({ project, onSubmit }) => {
-    const [name, setName] = useState(project ? project.name : '');
-    const [description, setDescription] = useState(project ? project.description : '');
-    const [startDate, setStartDate] = useState(project ? project.start_date : '');
-    const [endDate, setEndDate] = useState(project ? project.end_date : '');
+    const [formData, setFormData] = useState({
+        name: project?.name || '',
+        description: project?.description || '',
+        start_date: project?.start_date || '',
+        end_date: project?.end_date || ''
+    });
     const [error, setError] = useState('');
     const api = useApi();
     const navigate = useNavigate();
+
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prevData => ({ ...prevData, [name]: value }));
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
         try {
-            const projectData = { name, description, start_date: startDate, end_date: endDate };
             if (project) {
-                await api.put(`/projects/${project.id}/`, projectData);
+                await api.put(`/projects/${project.id}/`, formData);
             } else {
-                await api.post('/projects/', projectData);
+                await api.post('/projects/', formData);
             }
             onSubmit();
             navigate('/projects');
         } catch (err) {
             setError('Failed to save project. Please try again.');
+            console.error('Project save error:', err);
         }
     };
 
@@ -39,8 +46,9 @@ const ProjectForm = ({ project, onSubmit }) => {
                 <Label htmlFor="name">Project Name</Label>
                 <Input
                     id="name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
                     required
                 />
             </div>
@@ -48,28 +56,31 @@ const ProjectForm = ({ project, onSubmit }) => {
                 <Label htmlFor="description">Description</Label>
                 <Textarea
                     id="description"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
+                    name="description"
+                    value={formData.description}
+                    onChange={handleChange}
                     required
                 />
             </div>
             <div>
-                <Label htmlFor="startDate">Start Date</Label>
+                <Label htmlFor="start_date">Start Date</Label>
                 <Input
-                    id="startDate"
+                    id="start_date"
+                    name="start_date"
                     type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
+                    value={formData.start_date}
+                    onChange={handleChange}
                     required
                 />
             </div>
             <div>
-                <Label htmlFor="endDate">End Date</Label>
+                <Label htmlFor="end_date">End Date</Label>
                 <Input
-                    id="endDate"
+                    id="end_date"
+                    name="end_date"
                     type="date"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
+                    value={formData.end_date}
+                    onChange={handleChange}
                     required
                 />
             </div>

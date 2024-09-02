@@ -13,7 +13,7 @@ export const AuthProvider = ({ children }) => {
             const token = localStorage.getItem('access_token');
             if (token) {
                 setAuthToken(token);
-                const response = await api.get('users/me/'); // Assuming there's an endpoint to get user info
+                const response = await api.get('users/me/');
                 setUser(response.data);
             }
         } catch (error) {

@@ -1,18 +1,15 @@
 from django.contrib.auth import authenticate
-from rest_framework import status,viewsets, filters ,generics, permissions
+from rest_framework import status, viewsets, filters, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
-from .serializers import UserSerializer ,ProjectSerializer, TaskSerializer
-from .models import Project, Task
-from .permissions import IsAdminOrReadOnly, IsOwnerOrAdmin
-from rest_framework.decorators import action ,api_view ,permission_classes
-from rest_framework.response import Response
+from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.reverse import reverse
-from rest_framework.permissions import AllowAny
-
+from .serializers import UserSerializer, ProjectSerializer, TaskSerializer
+from .models import Project, Task
+from .permissions import IsAdminOrReadOnly, IsOwnerOrAdmin
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
@@ -63,7 +60,6 @@ class LoginView(APIView):
             })
         return Response({'error': 'Invalid Credentials'}, status=status.HTTP_401_UNAUTHORIZED)
 
-
 class ProjectViewSet(viewsets.ModelViewSet):
     queryset = Project.objects.all()
     serializer_class = ProjectSerializer
@@ -73,10 +69,8 @@ class ProjectViewSet(viewsets.ModelViewSet):
     pagination_class = StandardResultsSetPagination
 
 class TaskViewSet(viewsets.ModelViewSet):
-    queryset = Task.objects.all()
     serializer_class = TaskSerializer
     filter_backends = [filters.SearchFilter]
-    permission_classes = [permissions.IsAuthenticated, IsOwnerOrAdmin]
     search_fields = ['title', 'description', 'status']
     pagination_class = StandardResultsSetPagination
 
@@ -94,7 +88,7 @@ class TaskViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['get'])
     def my_tasks(self, request):
-        tasks = Task.objects.filter(assigned_to=request.user)
+        tasks = self.get_queryset()
         page = self.paginate_queryset(tasks)
         if page is not None:
             serializer = self.get_serializer(page, many=True)

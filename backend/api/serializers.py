@@ -1,8 +1,9 @@
 from rest_framework import serializers
-from .models import User,Project, Task
+from .models import User, Project, Task
 
 class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
+    is_admin = serializers.BooleanField(read_only=True)
 
     class Meta:
         model = User
@@ -13,11 +14,10 @@ class UserSerializer(serializers.ModelSerializer):
         user = User.objects.create_user(
             username=validated_data['username'],
             email=validated_data['email'],
-            password=validated_data['password'],
-            is_admin=validated_data.get('is_admin', False)
+            password=validated_data['password']
         )
         return user
-    
+
 class ProjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = Project

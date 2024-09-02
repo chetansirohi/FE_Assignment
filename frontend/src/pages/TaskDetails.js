@@ -4,9 +4,11 @@ import { useApi } from '../hooks/useApi';
 import { Card, CardHeader, CardTitle, CardContent } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
+import { handleApiError } from '../utils/errorHandler';
 
 const TaskDetails = () => {
     const [task, setTask] = useState(null);
+    const [loading, setLoading] = useState(true);
     const { id } = useParams();
     const api = useApi();
 
@@ -16,13 +18,16 @@ const TaskDetails = () => {
                 const response = await api.get(`/tasks/${id}/`);
                 setTask(response.data);
             } catch (error) {
-                console.error('Error fetching task:', error);
+                handleApiError(error);
+            } finally {
+                setLoading(false);
             }
         };
         fetchTask();
     }, [id, api]);
 
-    if (!task) return <div>Loading...</div>;
+    if (loading) return <div>Loading...</div>;
+    if (!task) return <div>Task not found</div>;
 
     return (
         <div className="container mx-auto px-4 py-8">

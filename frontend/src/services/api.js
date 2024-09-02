@@ -24,7 +24,7 @@ let refreshSubscribers = [];
 const subscribeTokenRefresh = (cb) => refreshSubscribers.push(cb);
 
 const onTokenRefreshed = (token) => {
-    refreshSubscribers.map((cb) => cb(token));
+    refreshSubscribers.forEach((cb) => cb(token));
     refreshSubscribers = [];
 };
 
@@ -33,7 +33,7 @@ api.interceptors.response.use(
     async (error) => {
         const originalRequest = error.config;
 
-        if (error.response.status === 401 && !originalRequest._retry) {
+        if (error.response?.status === 401 && !originalRequest._retry) {
             if (isRefreshing) {
                 return new Promise((resolve) => {
                     subscribeTokenRefresh((token) => {
@@ -58,7 +58,6 @@ api.interceptors.response.use(
                 originalRequest.headers['Authorization'] = `Bearer ${access}`;
                 return api(originalRequest);
             } catch (refreshError) {
-                // If refresh fails, redirect to login
                 localStorage.removeItem('access_token');
                 localStorage.removeItem('refresh_token');
                 removeAuthToken();

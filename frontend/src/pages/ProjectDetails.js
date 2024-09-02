@@ -4,9 +4,11 @@ import { useApi } from '../hooks/useApi';
 import { Card, CardHeader, CardTitle, CardContent } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import TaskList from '../components/Task/TaskList';
+import { handleApiError } from '../utils/errorHandler';
 
 const ProjectDetails = () => {
     const [project, setProject] = useState(null);
+    const [loading, setLoading] = useState(true);
     const { id } = useParams();
     const api = useApi();
 
@@ -16,13 +18,16 @@ const ProjectDetails = () => {
                 const response = await api.get(`/projects/${id}/`);
                 setProject(response.data);
             } catch (error) {
-                console.error('Error fetching project:', error);
+                handleApiError(error);
+            } finally {
+                setLoading(false);
             }
         };
         fetchProject();
     }, [id, api]);
 
-    if (!project) return <div>Loading...</div>;
+    if (loading) return <div>Loading...</div>;
+    if (!project) return <div>Project not found</div>;
 
     return (
         <div className="container mx-auto px-4 py-8">

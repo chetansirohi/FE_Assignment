@@ -7,18 +7,22 @@ import { Label } from "../ui/label";
 import { Alert, AlertDescription } from "../ui/alert";
 
 const LoginForm = () => {
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
+    const [formData, setFormData] = useState({ username: '', password: '' });
     const [error, setError] = useState('');
     const { login } = useAuth();
     const navigate = useNavigate();
+
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prevData => ({ ...prevData, [name]: value }));
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
         try {
-            await login({ username, password });
-            navigate('/');  // Redirect to home page after login
+            await login(formData);
+            navigate('/');
         } catch (err) {
             setError('Failed to login. Please check your credentials.');
             console.error('Login error:', err);
@@ -31,9 +35,10 @@ const LoginForm = () => {
                 <Label htmlFor="username">Username</Label>
                 <Input
                     id="username"
+                    name="username"
                     type="text"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
+                    value={formData.username}
+                    onChange={handleChange}
                     required
                 />
             </div>
@@ -41,9 +46,10 @@ const LoginForm = () => {
                 <Label htmlFor="password">Password</Label>
                 <Input
                     id="password"
+                    name="password"
                     type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    value={formData.password}
+                    onChange={handleChange}
                     required
                 />
             </div>

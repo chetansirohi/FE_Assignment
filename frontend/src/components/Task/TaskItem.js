@@ -4,6 +4,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "../ui/card
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import { toast } from 'react-toastify';
 
 const TaskItem = ({ task, onStatusUpdate }) => {
     const api = useApi();
@@ -12,8 +13,18 @@ const TaskItem = ({ task, onStatusUpdate }) => {
         try {
             await api.patch(`/tasks/${task.id}/update_status/`, { status: newStatus });
             onStatusUpdate();
+            toast.success('Task status updated successfully');
         } catch (error) {
             console.error('Error updating task status:', error);
+            toast.error('Failed to update task status');
+        }
+    };
+
+    const getStatusColor = (status) => {
+        switch (status) {
+            case 'DONE': return 'bg-green-500';
+            case 'IN_PROGRESS': return 'bg-yellow-500';
+            default: return 'bg-gray-500';
         }
     };
 
@@ -28,7 +39,7 @@ const TaskItem = ({ task, onStatusUpdate }) => {
                     <p>Due: {new Date(task.due_date).toLocaleDateString()}</p>
                     <p>Assigned to: {task.assigned_to}</p>
                 </div>
-                <Badge className="mt-2" variant={task.status === 'DONE' ? 'success' : 'default'}>
+                <Badge className={`mt-2 ${getStatusColor(task.status)}`}>
                     {task.status}
                 </Badge>
             </CardContent>

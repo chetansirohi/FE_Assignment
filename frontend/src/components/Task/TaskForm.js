@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useApi } from '../../hooks/useApi';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "../ui/button";
@@ -9,55 +9,64 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Alert, AlertDescription } from "../ui/alert";
 
 const TaskForm = ({ task, onSubmit }) => {
-    const [title, setTitle] = useState(task ? task.title : '');
-    const [description, setDescription] = useState(task ? task.description : '');
-    const [status, setStatus] = useState(task ? task.status : 'TODO');
-    const [projectId, setProjectId] = useState(task ? task.project : '');
-    const [assignedTo, setAssignedTo] = useState(task ? task.assigned_to : '');
-    const [dueDate, setDueDate] = useState(task ? task.due_date : '');
+    const [formData, setFormData] = useState({
+        title: task?.title || '',
+        description: task?.description || '',
+        status: task?.status || 'TODO',
+        project: task?.project || '',
+        assigned_to: task?.assigned_to || '',
+        due_date: task?.due_date || ''
+    });
     const [projects, setProjects] = useState([]);
     const [users, setUsers] = useState([]);
     const [error, setError] = useState('');
     const api = useApi();
     const navigate = useNavigate();
 
-    useEffect(() => {
-        fetchProjects();
-        fetchUsers();
-    }, []);
-
-    const fetchProjects = async () => {
+    const fetchProjects = useCallback(async () => {
         try {
             const response = await api.get('/projects/');
             setProjects(response.data.results);
         } catch (error) {
             console.error('Error fetching projects:', error);
+            setError('Failed to fetch projects. Please try again.');
         }
-    };
+    }, [api]);
 
-    const fetchUsers = async () => {
+    const fetchUsers = useCallback(async () => {
         try {
             const response = await api.get('/users/');
             setUsers(response.data.results);
         } catch (error) {
             console.error('Error fetching users:', error);
+            setError('Failed to fetch users. Please try again.');
         }
+    }, [api]);
+
+    useEffect(() => {
+        fetchProjects();
+        fetchUsers();
+    }, [fetchProjects, fetchUsers]);
+
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prevData => ({ ...prevData, [name]: value }));
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
         try {
-            const taskData = { title, description, status, project: projectId, assigned_to: assignedTo, due_date: dueDate };
             if (task) {
-                await api.put(`/tasks/${task.id}/`, taskData);
+                await api.put(`/tasks/${task.id}/`, formData);
             } else {
-                await api.post('/tasks/', taskData);
+                await api.post('/tasks/', formData);
             }
             onSubmit();
             navigate('/tasks');
         } catch (err) {
             setError('Failed to save task. Please try again.');
+            console.error('Task save error:', err);
         }
     };
 
@@ -67,8 +76,9 @@ const TaskForm = ({ task, onSubmit }) => {
                 <Label htmlFor="title">Task Title</Label>
                 <Input
                     id="title"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
+                    name="title"
+                    value={formData.title}
+                    onChange={handleChange}
                     required
                 />
             </div>
@@ -76,14 +86,15 @@ const TaskForm = ({ task, onSubmit }) => {
                 <Label htmlFor="description">Description</Label>
                 <Textarea
                     id="description"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
+                    name="description"
+                    value={formData.description}
+                    onChange={handleChange}
                     required
                 />
             </div>
             <div>
                 <Label htmlFor="status">Status</Label>
-                <Select onValueChange={setStatus} defaultValue={status}>
+                <Select onValueChange={(value) => setFormData(prev => ({ ...prev, status: value }))} defaultValue={formData.status}>
                     <SelectTrigger className="w-full">
                         <SelectValue placeholder="Select status" />
                     </SelectTrigger>
@@ -96,7 +107,7 @@ const TaskForm = ({ task, onSubmit }) => {
             </div>
             <div>
                 <Label htmlFor="project">Project</Label>
-                <Select onValueChange={setProjectId} defaultValue={projectId}>
+                <Select onValueChange={(value) => setFormData(prev => ({ ...prev, project: value }))} defaultValue={formData.project}>
                     <SelectTrigger className="w-full">
                         <SelectValue placeholder="Select project" />
                     </SelectTrigger>
@@ -108,8 +119,8 @@ const TaskForm = ({ task, onSubmit }) => {
                 </Select>
             </div>
             <div>
-                <Label htmlFor="assignedTo">Assigned To</Label>
-                <Select onValueChange={setAssignedTo} defaultValue={assignedTo}>
+                <Label htmlFor="assigned_to">Assigned To</Label>
+                <Select onValueChange={(value) => setFormData(prev => ({ ...prev, assigned_to: value }))} defaultValue={formData.assigned_to}>
                     <SelectTrigger className="w-full">
                         <SelectValue placeholder="Select user" />
                     </SelectTrigger>
@@ -121,12 +132,13 @@ const TaskForm = ({ task, onSubmit }) => {
                 </Select>
             </div>
             <div>
-                <Label htmlFor="dueDate">Due Date</Label>
+                <Label htmlFor="due_date">Due Date</Label>
                 <Input
-                    id="dueDate"
+                    id="due_date"
+                    name="due_date"
                     type="date"
-                    value={dueDate}
-                    onChange={(e) => setDueDate(e.target.value)}
+                    value={formData.due_date}
+                    onChange={handleChange}
                     required
                 />
             </div>

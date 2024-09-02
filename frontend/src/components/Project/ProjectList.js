@@ -1,38 +1,45 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useApi } from '../../hooks/useApi';
 import ProjectItem from './ProjectItem';
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { useAuth } from '../../hooks/useAuth';
 import { toast } from 'react-toastify';
+import { Link } from 'react-router-dom';
 
 const ProjectList = () => {
     const [projects, setProjects] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
+    const [loading, setLoading] = useState(true);
     const { user } = useAuth();
     const api = useApi();
 
-    useEffect(() => {
-        fetchProjects();
-    }, []);
-
-    const fetchProjects = async () => {
+    const fetchProjects = useCallback(async () => {
+        setLoading(true);
         try {
             const response = await api.get('/projects/');
             setProjects(response.data.results);
         } catch (error) {
             console.error('Error fetching projects:', error);
-            if (error.response && error.response.status === 403) {
+            if (error.response?.status === 403) {
                 toast.error("You don't have permission to view projects.");
             } else {
                 toast.error("An error occurred while fetching projects.");
             }
+        } finally {
+            setLoading(false);
         }
-    };
+    }, [api]);
+
+    useEffect(() => {
+        fetchProjects();
+    }, [fetchProjects]);
 
     const filteredProjects = projects.filter(project =>
         project.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    if (loading) return <div>Loading projects...</div>;
 
     return (
         <div className="space-y-4">
@@ -45,14 +52,20 @@ const ProjectList = () => {
                     className="max-w-sm"
                 />
                 {user && user.is_admin && (
-                    <Button>Create New Project</Button>
+                    <Link to="/projects/new">
+                        <Button>Create New Project</Button>
+                    </Link>
                 )}
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredProjects.map(project => (
-                    <ProjectItem key={project.id} project={project} />
-                ))}
-            </div>
+            {filteredProjects.length === 0 ? (
+                <p>No projects found.</p>
+            ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {filteredProjects.map(project => (
+                        <ProjectItem key={project.id} project={project} />
+                    ))}
+                </div>
+            )}
         </div>
     );
 };
